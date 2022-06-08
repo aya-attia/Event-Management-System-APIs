@@ -1,0 +1,102 @@
+const { response } = require("express");
+const { request } = require("express");
+const jwt=require('jsonwebtoken');
+const Student=require("./../Models/StudentModel")
+const Speaker=require("./../Models/SpeakerModel");
+const {validationResult} = require("express-validator");
+const mongoose = require("mongoose");
+const bcrypt = require('bcryptjs');
+var salt =10;
+
+function DataValidation(req)
+{
+    var result = validationResult(req);
+    if(!result.isEmpty())
+    {
+        let message = result.array().reduce((current, error)=>current + " " + error.msg, ", ");
+        let error = new Error(message);
+        error.status = 422;
+        console.log(message);
+        throw error;       
+    }
+}
+
+function DataValidation(req)
+{
+    let result = validationResult(req);
+    if(!result.isEmpty())
+    {
+        let message = result.array().reduce((current, error)=>current + " " + error.msg, ", ");
+        let error = new Error(message);
+        error.status = 422;
+        console.log(message);
+        throw error;        
+    }
+}
+
+module.exports.registerStudent =(request,response,next)=>{
+    Student.findOne().sort({"_id": -1}).exec(function(err, post) {
+        //console.log( post._id+1 );
+
+    DataValidation(request);
+    bcrypt.hash(request.body.Password, salt, function (error, hash) {
+        //console.log(hash);
+        let student = new Student({
+            _id:post._id+1,
+            Email:request.body.Email,
+            // Password:request.body.Password
+            Password:hash
+        });
+    
+        student.save()
+            .then((data)=>{
+                if (error) {
+                    //return console.log('Cannot encrypt');
+                    throw new Error("Cannot encrypt");
+                    //response.status(500).json({message:"Cannot encrypt"});//check for another way
+            }
+            response.status(201).json({message: "Student added", data});
+        })
+        .catch(error=>next(error)
+        );                       
+            
+    })
+        
+        // console.log(result);
+        // console.log(request.body); 
+    }); 
+}
+
+module.exports.registerSpeaker =(request,response,next)=>{
+    // Speaker.findOne().sort({"_id": -1}).exec(function(err, post) {
+    //     //console.log( post._id+1 );
+
+        DataValidation(request);
+        bcrypt.hash(request.body.Password, salt, function (error, hash) {
+            //console.log(hash);
+            let speaker = new Speaker({
+                _id:mongoose.Types.ObjectId(),
+                Email:request.body.Email,
+                UserName:request.body.UserName,
+                Password:hash,
+                Address:{
+                    City:request.body.City,
+                    Street:request.body.Street,
+                    Building:request.body.Building
+                }
+            });
+        
+            speaker.save()
+                .then((data)=>{
+                    if (error) {
+                        //return console.log('Cannot encrypt');
+                        throw new Error("Cannot encrypt");
+                        //response.status(500).json({message:"Cannot encrypt"});//check for another way
+                }
+                response.status(201).json({message: "Speaker added", data});
+            })
+            .catch(error=>next(error)
+            );                       
+                
+        })
+}
